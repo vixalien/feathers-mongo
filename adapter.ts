@@ -13,9 +13,9 @@ import {
   NotFound,
   NullableId,
   ObjectId,
+  omit,
   PaginationOptions,
   UpdateOptions,
-  omit,
 } from "./deps.ts";
 import type { Collection } from "./deps.ts";
 
@@ -23,7 +23,7 @@ import { errorHandler } from "./errorHandler.ts";
 import { select } from "https://esm.sh/v89/@feathersjs/adapter-commons@5.0.0-pre.27/lib/index.d.ts";
 import { _ } from "https://deno.land/x/feathers@v5.0.0-pre.27/_commons/mod.ts";
 
-interface Paginated<T> {
+export interface Paginated<T> {
   total: number;
   limit: number;
   skip: number;
@@ -39,18 +39,18 @@ interface MongoAdapterOptions<Item = any> extends AdapterServiceOptions {
 export interface MongoAdapterParams<Query = AdapterQuery>
   extends AdapterParams<Query, Partial<MongoAdapterOptions>> {
   mongo:
-  | FindOptions
-  | InsertOptions
-  | DeleteOptions
-  | CountOptions
-  | UpdateOptions;
+    | FindOptions
+    | InsertOptions
+    | DeleteOptions
+    | CountOptions
+    | UpdateOptions;
 }
 
 export class MongoAdapter<
   Item,
   Body = Partial<Item>,
   Params extends MongoAdapterParams<any> = MongoAdapterParams,
-  > extends AdapterBase<Item, Body, Params, MongoAdapterOptions> {
+> extends AdapterBase<Item, Body, Params, MongoAdapterOptions> {
   constructor(options: MongoAdapterOptions) {
     if (!options) {
       throw new Error("Mongo options have to be provided");
@@ -111,8 +111,11 @@ export class MongoAdapter<
     }
   }
 
-  async $findOrGet(id: NullableId, params: Params): Promise<Item | Item[] | Paginated<Item>> {
-    return id === null ? await this.$find(params) : await this.$get(id, params)
+  async $findOrGet(
+    id: NullableId,
+    params: Params,
+  ): Promise<Item | Item[] | Paginated<Item>> {
+    return id === null ? await this.$find(params) : await this.$get(id, params);
   }
 
   normalizeId(id: NullableId, data: Partial<Body>): Partial<Body> {
@@ -125,8 +128,8 @@ export class MongoAdapter<
       // previous value. This prevents orphaned documents.
       return {
         ...data,
-        [this.id]: id
-      }
+        [this.id]: id,
+      };
     } else {
       return data;
     }
@@ -268,40 +271,48 @@ export class MongoAdapter<
       .catch(errorHandler);
   }
 
-  async $patch(id: null, data: Partial<Body>, params?: Params): Promise<Item[]>
-  async $patch(id: Id, data: Partial<Body>, params?: Params): Promise<Item>
-  async $patch(id: NullableId, data: Partial<Body>, _params?: Params): Promise<Item | Item[]>
-  async $patch(id: NullableId, _data: Partial<Body>, params: Params = {} as Params): Promise<Item | Item[]> {
+  async $patch(id: null, data: Partial<Body>, params?: Params): Promise<Item[]>;
+  async $patch(id: Id, data: Partial<Body>, params?: Params): Promise<Item>;
+  async $patch(
+    id: NullableId,
+    data: Partial<Body>,
+    _params?: Params,
+  ): Promise<Item | Item[]>;
+  async $patch(
+    id: NullableId,
+    _data: Partial<Body>,
+    params: Params = {} as Params,
+  ): Promise<Item | Item[]> {
     const data = this.normalizeId(id, _data);
     const { Model } = this.getOptions(params);
     const model = await Promise.resolve(Model);
     const {
       filter,
-      options: { select }
+      options: { select },
     } = this.optionsFilter(id, params);
     const updateOptions = { ...params.mongo } as UpdateOptions;
 
     const modifier = Object.keys(data).reduce((current, key) => {
       const value = data[key as keyof typeof data];
 
-      if (key.charAt(0) !== '$') {
+      if (key.charAt(0) !== "$") {
         current.$set = {
           ...current.$set,
-          [key]: value
-        }
+          [key]: value,
+        };
       } else {
         current[key] = value;
       }
 
-      return current
-    }, {} as any)
+      return current;
+    }, {} as any);
     const originalIds = await this.$findOrGet(id, {
       ...params,
       query: {
         ...filter,
-        $select: [this.id]
+        $select: [this.id],
       },
-      paginate: false
+      paginate: false,
     }) as Item;
 
     const items = Array.isArray(originalIds) ? originalIds : [originalIds];
@@ -311,11 +322,11 @@ export class MongoAdapter<
       paginate: false,
       query: {
         [this.id]: {
-          $in: idList
+          $in: idList,
         },
         $select: select,
-      }
-    }
+      },
+    };
 
     await model.updateMany(filter, modifier, updateOptions);
 
@@ -323,7 +334,11 @@ export class MongoAdapter<
       .catch(errorHandler);
   }
 
-  async $update(id: Id, data: Body, params: Params = {} as Params): Promise<Item> {
+  async $update(
+    id: Id,
+    data: Body,
+    params: Params = {} as Params,
+  ): Promise<Item> {
     const { Model } = this.getOptions(params);
     const model = await Promise.resolve(Model);
     const { filter } = this.optionsFilter(id, params);
@@ -335,15 +350,18 @@ export class MongoAdapter<
       .catch(errorHandler);
   }
 
-  async $remove(id: null, params?: Params): Promise<Item[]>
-  async $remove(id: Id, params?: Params): Promise<Item>
-  async $remove(id: NullableId, _params?: Params): Promise<Item | Item[]>
-  async $remove(id: NullableId, params: Params = {} as Params): Promise<Item | Item[]> {
+  async $remove(id: null, params?: Params): Promise<Item[]>;
+  async $remove(id: Id, params?: Params): Promise<Item>;
+  async $remove(id: NullableId, _params?: Params): Promise<Item | Item[]>;
+  async $remove(
+    id: NullableId,
+    params: Params = {} as Params,
+  ): Promise<Item | Item[]> {
     const { Model } = this.getOptions(params);
     const model = await Promise.resolve(Model);
     const {
       filter,
-      options: { select }
+      options: { select },
     } = this.optionsFilter(id, params);
     const deleteOptions = { ...params.mongo } as DeleteOptions;
     const findParams = {
@@ -351,12 +369,12 @@ export class MongoAdapter<
       paginate: false,
       query: {
         ...filter,
-        $select: select
-      }
+        $select: select,
+      },
     } as Params;
 
     return (this.$findOrGet(id, findParams) as Promise<Item>)
-      .then(async items => {
+      .then(async (items) => {
         await model.deleteMany(filter, deleteOptions);
         return items;
       })

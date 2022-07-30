@@ -53,7 +53,7 @@ export interface MongoAdapterParams<Item = any, Query = AdapterQuery>
 export class MongoAdapter<
   Item,
   Body = Partial<Item>,
-  Params extends MongoAdapterParams<any> = MongoAdapterParams,
+  Params extends MongoAdapterParams<any> = MongoAdapterParams<Item>,
 > extends AdapterBase<Item, Body, Params, MongoAdapterOptions> {
   constructor(options: MongoAdapterOptions) {
     if (!options) {

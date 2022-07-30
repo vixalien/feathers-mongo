@@ -8,7 +8,7 @@ export * from "./errorHandler.ts";
 export class MongoService<
   T = any,
   D = Partial<T>,
-  P extends MongoAdapterParams<any> = MongoAdapterParams,
+  P extends MongoAdapterParams<any> = MongoAdapterParams<T>,
 > extends MongoAdapter<T, D, P> implements ServiceMethods<T | Paginated<T>, D> {
   async setup() {
   }

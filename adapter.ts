@@ -42,11 +42,11 @@ interface MongoAdapterOptions<Item = any> extends AdapterServiceOptions {
 export interface MongoAdapterParams<Item = any, Query = AdapterQuery>
   extends Omit<AdapterParams<Query, Partial<MongoAdapterOptions>>, "query"> {
   mongo?:
-    | FindOptions
-    | InsertOptions
-    | DeleteOptions
-    | CountOptions
-    | UpdateOptions;
+  | FindOptions
+  | InsertOptions
+  | DeleteOptions
+  | CountOptions
+  | UpdateOptions;
   query?: Filter<Item> & AdapterQuery
 }
 
@@ -54,7 +54,7 @@ export class MongoAdapter<
   Item,
   Body = Partial<Item>,
   Params extends MongoAdapterParams<any> = MongoAdapterParams<Item>,
-> extends AdapterBase<Item, Body, Params, MongoAdapterOptions> {
+  > extends AdapterBase<Item, Body, Params, MongoAdapterOptions> {
   constructor(options: MongoAdapterOptions) {
     if (!options) {
       throw new Error("Mongo options have to be provided");
@@ -259,16 +259,18 @@ export class MongoAdapter<
       ? model
         .insertMany(data.map(setId), writeOptions as InsertOptions)
         .then((result) => {
-          return Promise.all(
-            Object
-              .values(result.insertedIds)
-              .map((_id) =>
-                model.findOne({ _id }, params.mongo as FindOptions)
-              ),
-          );
+          return model
+            .find({
+              _id: {
+                $in: result.insertedIds
+              }
+            }, params.mongo as FindOptions)
+            .toArray()
+
         })
       : model
-        .insertOne(setId(data), writeOptions as InsertOptions);
+        .insertOne(setId(data), writeOptions as InsertOptions)
+        .then(id => model.findOne({ _id: id }, params.mongo as FindOptions))
 
     return promise
       .then(select(params, this.id))

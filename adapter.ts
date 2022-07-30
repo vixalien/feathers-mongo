@@ -47,7 +47,7 @@ export interface MongoAdapterParams<Item = any, Query = AdapterQuery>
     | DeleteOptions
     | CountOptions
     | UpdateOptions;
-  filter?: Filter<Item> & AdapterQuery
+  query?: Filter<Item> & AdapterQuery
 }
 
 export class MongoAdapter<
@@ -79,17 +79,17 @@ export class MongoAdapter<
   }
 
   optionsFilter(id: NullableId, params: Params) {
-    const { $select, $sort, $limit, $skip, ...filter } =
-      (params.filter || {}) as AdapterQuery;
+    const { $select, $sort, $limit, $skip, ...query } =
+      (params.query || {}) as AdapterQuery;
 
     if (id !== null) {
-      filter.$and = (filter.$and || []).concat({
+      query.$and = (query.$and || []).concat({
         [this.id]: this.getObjectId(id),
       });
     }
 
-    if (filter[this.id]) {
-      filter[this.id] = this.getObjectId(filter[this.id]);
+    if (query[this.id]) {
+      query[this.id] = this.getObjectId(query[this.id]);
     }
 
     return {
@@ -99,7 +99,7 @@ export class MongoAdapter<
         limit: $limit,
         skip: $skip,
       },
-      filter,
+      filter: query,
     };
   }
 

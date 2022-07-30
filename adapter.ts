@@ -1,8 +1,7 @@
 // deno-lint-ignore-file no-explicit-any
 import {
   _,
-  // adapter
-  AdapterBase,
+  commons,
   AdapterParams,
   AdapterQuery,
   AdapterServiceOptions,
@@ -15,12 +14,16 @@ import {
   NullableId,
   ObjectId,
   PaginationOptions,
-  select,
   UpdateOptions,
 } from "./deps.ts";
 import type { Collection } from "./deps.ts";
 
 import { errorHandler } from "./errorHandler.ts";
+
+const {
+  AdapterBase,
+  select
+} = commons;
 
 export interface Paginated<T> {
   total: number;

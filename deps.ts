@@ -9,9 +9,9 @@ export {
 } from "https://deno.land/x/feathers@v5.0.0-pre.27/_errors/mod.ts";
 
 export {
-  AdapterBase,
-  select,
+  default as commons,
 } from "https://esm.sh/@feathersjs/adapter-commons@5.0.0-pre.27";
+
 export type {
   AdapterParams,
   AdapterQuery,

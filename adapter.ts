@@ -1,5 +1,6 @@
 // deno-lint-ignore-file no-explicit-any
 import {
+  _,
   // adapter
   AdapterBase,
   AdapterParams,
@@ -13,15 +14,13 @@ import {
   NotFound,
   NullableId,
   ObjectId,
-  omit,
   PaginationOptions,
+  select,
   UpdateOptions,
 } from "./deps.ts";
 import type { Collection } from "./deps.ts";
 
 import { errorHandler } from "./errorHandler.ts";
-import { select } from "https://esm.sh/v89/@feathersjs/adapter-commons@5.0.0-pre.27/lib/index.d.ts";
-import { _ } from "https://deno.land/x/feathers@v5.0.0-pre.27/_commons/mod.ts";
 
 export interface Paginated<T> {
   total: number;
@@ -38,7 +37,7 @@ interface MongoAdapterOptions<Item = any> extends AdapterServiceOptions {
 
 export interface MongoAdapterParams<Query = AdapterQuery>
   extends AdapterParams<Query, Partial<MongoAdapterOptions>> {
-  mongo:
+  mongo?:
     | FindOptions
     | InsertOptions
     | DeleteOptions
@@ -122,7 +121,7 @@ export class MongoAdapter<
     if (this.id === "_id") {
       // Default Mongo IDs cannot be updated. The Mongo library handles
       // this automatically.
-      return omit(data, this.id);
+      return _.omit(data, this.id);
     } else if (id !== null) {
       // If not using the default Mongo _id field set the ID to its
       // previous value. This prevents orphaned documents.

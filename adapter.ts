@@ -15,6 +15,7 @@ import {
   ObjectId,
   PaginationOptions,
   UpdateOptions,
+  Filter
 } from "./deps.ts";
 import type { Collection } from "./deps.ts";
 
@@ -38,14 +39,15 @@ interface MongoAdapterOptions<Item = any> extends AdapterServiceOptions {
   useEstimatedDocumentCount?: boolean;
 }
 
-export interface MongoAdapterParams<Query = AdapterQuery>
-  extends AdapterParams<Query, Partial<MongoAdapterOptions>> {
+export interface MongoAdapterParams<Item = any, Query = AdapterQuery>
+  extends Omit<AdapterParams<Query, Partial<MongoAdapterOptions>>, "query"> {
   mongo?:
     | FindOptions
     | InsertOptions
     | DeleteOptions
     | CountOptions
     | UpdateOptions;
+  filter?: Filter<Item> & AdapterQuery
 }
 
 export class MongoAdapter<
@@ -78,7 +80,7 @@ export class MongoAdapter<
 
   optionsFilter(id: NullableId, params: Params) {
     const { $select, $sort, $limit, $skip, ...filter } =
-      (params.query || {}) as AdapterQuery;
+      (params.filter || {}) as AdapterQuery;
 
     if (id !== null) {
       filter.$and = (filter.$and || []).concat({
@@ -185,7 +187,7 @@ export class MongoAdapter<
     const model = await Promise.resolve(Model);
 
     if (options.select !== undefined) {
-      findOptions.projection = this.getSelect(options.select);
+      // findOptions.projection = this.getSelect(options.select);
     }
 
     const cursor = model.find(filter, findOptions);
@@ -310,7 +312,7 @@ export class MongoAdapter<
     }, {} as any);
     const originalIds = await this.$findOrGet(id, {
       ...params,
-      query: {
+      filter: {
         ...filter,
         $select: [this.id],
       },
@@ -319,10 +321,10 @@ export class MongoAdapter<
 
     const items = Array.isArray(originalIds) ? originalIds : [originalIds];
     const idList = items.map((item: any) => item[this.id]) as ObjectId[];
-    const findParams = {
+    const findParams: Params = {
       ...params,
       paginate: false,
-      query: {
+      filter: {
         [this.id]: {
           $in: idList,
         },
@@ -369,7 +371,7 @@ export class MongoAdapter<
     const findParams = {
       ...params,
       paginate: false,
-      query: {
+      filter: {
         ...filter,
         $select: select,
       },

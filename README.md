@@ -15,7 +15,7 @@ import {
 
 import {
   MongoService
-} from "https://deno.land/x/feathers-mongo/mod.ts";
+} from "https://deno.land/x/feathers_mongo/mod.ts";
 
 const client = new MongoClient();
 
